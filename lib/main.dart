@@ -163,8 +163,15 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         _trades.add(trade);
         _storage.writeTrades(_trades);
+
+        // Update balance after adding trade
+        if (isProfit) {
+          _balance += amount;
+        } else {
+          _balance -= amount;
+        }
+
         _calculateWinRate();
-        _calculateBalance();
         _calculateStatistics();
         _controller.clear();
       });
@@ -178,13 +185,21 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         _trades.add(trade);
         _storage.writeTrades(_trades);
+
+        // Update balance after adding trade
+        if (isProfit) {
+          _balance += amount;
+        } else {
+          _balance -= amount;
+        }
+
         _calculateWinRate();
-        _calculateBalance();
         _calculateStatistics();
         _controller2.clear();
       });
     }
   }
+
   Future<void> _updateBalance() async {
     final newBalance = double.tryParse(_balanceController.text);
 
@@ -203,7 +218,6 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     }
   }
-
 
   Future<void> _resetTrades() async {
     final path = await _localFile;
@@ -473,9 +487,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 future: getPnLDataFromJson(),
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
-                    return SizedBox(
-                        width: snapshot.data!.length * 40.0,
-                        child: PnLBarChart(data: snapshot.data!));
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                          width: snapshot.data!.length * 40.0,
+                          child: PnLBarChart(data: snapshot.data!)),
+                    );
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else {
@@ -543,16 +560,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: Row(
                       children: <Widget>[
                         Expanded(
-                          child: TextField(
-                            controller: _balanceController,
-                            decoration: const InputDecoration(
-                                labelText: 'Enter Balance'),
-                            keyboardType: TextInputType.number,
+                          child: ElevatedButton(
+                            onPressed: _updateBalance,
+                            child: const Text('Update Balance'),
                           ),
-                        ),
-                        ElevatedButton(
-                          onPressed: _updateBalance,
-                          child: const Text('Update Balance'),
                         ),
                       ],
                     ),
