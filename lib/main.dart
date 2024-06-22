@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:trade_rush/data/loadNParseJson.dart';
 import 'package:trade_rush/style/colors.dart';
 import 'package:trade_rush/widgets/pnl_chart.dart';
@@ -55,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
   double _lossPercentage = 0.0; // Loss foiz
   double _highestProfit = 0.0; // Eng yuqori profit miqdori
   double _highestLoss = 0.0; // Eng yuqori loss miqdori
+  final TextEditingController _balanceController = TextEditingController();
 
   @override
   void initState() {
@@ -79,6 +82,16 @@ class _MyHomePageState extends State<MyHomePage> {
             trade.isProfit ? balance + trade.amount : balance - trade.amount);
   }
 
+  Future<String> get _localPath async {
+    final directory = await getTemporaryDirectory();
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    return File('$path/trades.json');
+  }
+
   void _copyJsonToClipboard() {
     print(0);
     final jsonString =
@@ -100,26 +113,39 @@ class _MyHomePageState extends State<MyHomePage> {
           .lastWhere((trade) => !trade.isProfit,
               orElse: () => Trade(amount: 0.0, isProfit: true))
           .amount;
-    }
 
-    // Profit va loss foizlarini hisoblash
-    if (_won > 0) {
-      _profitPercentage = (_won / (_won + _loss)) * 100;
-    }
-    if (_loss > 0) {
-      _lossPercentage = (_loss / (_won + _loss)) * 100;
-    }
+      // Profit va loss foizlarini hisoblash
+      _won = _trades.where((trade) => trade.isProfit).length;
+      _loss = _trades.where((trade) => !trade.isProfit).length;
+      int totalTrades = _won + _loss;
+      _winRate = totalTrades > 0 ? (_won / totalTrades) * 100 : 0.0;
 
-    // Eng yuqori profit va loss miqdorlarini aniqlash
-    if (_trades.isNotEmpty) {
+      if (_won > 0) {
+        _profitPercentage = (_won / totalTrades) * 100;
+      }
+      if (_loss > 0) {
+        _lossPercentage = (_loss / totalTrades) * 100;
+      }
+
+      // Eng yuqori profit va loss miqdorlarini aniqlash
       _highestProfit = _trades
           .where((trade) => trade.isProfit)
           .map((trade) => trade.amount)
-          .reduce((value, element) => value > element ? value : element);
+          .fold(0.0, (max, current) => current > max ? current : max);
+
       _highestLoss = _trades
           .where((trade) => !trade.isProfit)
           .map((trade) => trade.amount)
-          .reduce((value, element) => value > element ? value : element);
+          .fold(0.0, (max, current) => current > max ? current : max);
+    } else {
+      // If _trades is empty, reset all statistics variables
+      _won = 0;
+      _loss = 0;
+      _winRate = 0.0;
+      _profitPercentage = 0.0;
+      _lossPercentage = 0.0;
+      _highestProfit = 0.0;
+      _highestLoss = 0.0;
     }
   }
 
@@ -159,32 +185,42 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     }
   }
+  Future<void> _updateBalance() async {
+    final newBalance = double.tryParse(_balanceController.text);
 
-  // List<PnL> getPnLData() {
-  //   return [
-  //     PnL(DateTime(2023, 6, 1), 100),
-  //     PnL(DateTime(2023, 6, 2), -50),
-  //     PnL(DateTime(2023, 6, 3), 200),
-  //     PnL(DateTime(2023, 6, 4), -100),
-  //     PnL(DateTime(2023, 6, 5), 150),
-  //     PnL(DateTime(2023, 6, 6), 67),
-  //     PnL(DateTime(2023, 6, 6), -15),
-  //     PnL(DateTime(2023, 6, 6), 124),
-  //     PnL(DateTime(2023, 6, 6), 87),
-  //     PnL(DateTime(2023, 6, 6), -56),
-  //     PnL(DateTime(2023, 6, 6), 100),
-  //     PnL(DateTime(2023, 6, 6), 16),
-  //     PnL(DateTime(2023, 6, 6), 56),
-  //     PnL(DateTime(2023, 6, 6), -23),
-  //     PnL(DateTime(2023, 6, 6), 44),
-  //     PnL(DateTime(2023, 6, 6), 10),
-  //     PnL(DateTime(2023, 6, 6), 7),
-  //     PnL(DateTime(2023, 6, 6), 20),
-  //     PnL(DateTime(2023, 6, 6), 300),
-  //     PnL(DateTime(2023, 6, 6), 300),
-  //     PnL(DateTime(2023, 6, 6), 20),
-  //   ];
-  // }
+    if (newBalance != null) {
+      final path = await _localFile;
+
+      // Perform async operations first
+      if (await path.exists()) {
+        await _resetTrades();
+      }
+
+      // Update state within setState after async operations are done
+      setState(() {
+        _balance = newBalance;
+        _balanceController.clear();
+      });
+    }
+  }
+
+
+  Future<void> _resetTrades() async {
+    final path = await _localFile;
+    await path.delete();
+    setState(() {
+      _trades = [];
+      _won = 0;
+      _loss = 0;
+      _winRate = 0.0;
+      _lastProfit = 0.0;
+      _lastLoss = 0.0;
+      _profitPercentage = 0.0;
+      _lossPercentage = 0.0;
+      _highestProfit = 0.0;
+      _highestLoss = 0.0;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +241,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   borderRadius: BorderRadius.circular(10)),
               child: Center(
                 child: Text(
-                  'Win rate: $_winRate%',
+                  'Win rate: ${_winRate.toStringAsFixed(1)}%',
                   style: const TextStyle(color: Colors.white),
                 ),
               ),
@@ -329,7 +365,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                             ElevatedButton(
                                 onPressed: () => _addTrade2(false),
-                                child: const Text('Add Profit'))
+                                child: const Text('Add Loss'))
                           ],
                         ),
                       ),
@@ -432,19 +468,14 @@ class _MyHomePageState extends State<MyHomePage> {
             //graphic
             SizedBox(
               height: 350,
+              width: double.infinity,
               child: FutureBuilder<List<PnLData>>(
                 future: getPnLDataFromJson(),
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
-                    return Center(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: SizedBox(
-                          width: snapshot.data!.length * 40.0,
-                          child: PnLBarChart(data: snapshot.data!),
-                        ),
-                      ),
-                    );
+                    return SizedBox(
+                        width: snapshot.data!.length * 40.0,
+                        child: PnLBarChart(data: snapshot.data!));
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else {
@@ -503,15 +534,27 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => _copyJsonToClipboard(),
+                      onPressed: () => _resetTrades(),
                       child: const Text('RESET'),
                     ),
                   ),
                   const SizedBox(width: 15),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      child: const Text('Edit Balance'),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: TextField(
+                            controller: _balanceController,
+                            decoration: const InputDecoration(
+                                labelText: 'Enter Balance'),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: _updateBalance,
+                          child: const Text('Update Balance'),
+                        ),
+                      ],
                     ),
                   )
                 ],
