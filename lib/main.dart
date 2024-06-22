@@ -106,11 +106,13 @@ class _MyHomePageState extends State<MyHomePage> {
     if (_trades.isNotEmpty) {
       _lastProfit = _trades
           .lastWhere((trade) => trade.isProfit,
-              orElse: () => Trade(amount: 0.0, isProfit: false))
+              orElse: () =>
+                  Trade(amount: 0.0, isProfit: false, date: DateTime.now()))
           .amount;
       _lastLoss = _trades
           .lastWhere((trade) => !trade.isProfit,
-              orElse: () => Trade(amount: 0.0, isProfit: true))
+              orElse: () =>
+                  Trade(amount: 0.0, isProfit: true, date: DateTime.now()))
           .amount;
 
       // Profit va loss foizlarini hisoblash
@@ -158,7 +160,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void _addTrade(bool isProfit) {
     final amount = double.tryParse(_controller.text);
     if (amount != null) {
-      final trade = Trade(amount: amount, isProfit: isProfit);
+      final trade =
+          Trade(amount: amount, isProfit: isProfit, date: DateTime.now());
       setState(() {
         _trades.add(trade);
         _storage.writeTrades(_trades);
@@ -180,7 +183,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void _addTrade2(bool isProfit) {
     final amount = double.tryParse(_controller2.text);
     if (amount != null) {
-      final trade = Trade(amount: amount, isProfit: isProfit);
+      final trade =
+          Trade(amount: -amount, isProfit: isProfit, date: DateTime.now());
       setState(() {
         _trades.add(trade);
         _storage.writeTrades(_trades);
@@ -204,6 +208,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await path.delete();
     setState(() {
       _trades = [];
+      _balance = 0;
       _won = 0;
       _loss = 0;
       _winRate = 0.0;
@@ -233,76 +238,86 @@ class _MyHomePageState extends State<MyHomePage> {
               decoration: BoxDecoration(
                   color: bgPrimaryDark,
                   borderRadius: BorderRadius.circular(10)),
-              child: Center(
-                child: Text(
-                  'Yutish koeffitsiendi: ${_winRate.toStringAsFixed(1)}%',
-                  style: const TextStyle(color: Colors.white,fontSize: 23),
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Yutish koeffitsiendi:',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                  Text(
+                    '${_winRate.toStringAsFixed(1)}%',
+                    style: const TextStyle(
+                        color: clGreen,
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
             ),
             //No of trades widget
             Container(
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                   color: bgPrimaryDark,
                   borderRadius: BorderRadius.circular(10)),
-              child: Column(
+              child: Row(
                 children: [
-                  Container(
-                    margin: const EdgeInsets.only(right: 8, left: 8, top: 8),
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                        color: bgSecondaryDark,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          'Barcha tradelar soni: ${_trades.length}',
-                          style: const TextStyle(color: Colors.white),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Barcha tradelar soni:',
+                          style: TextStyle(color: Colors.white, fontSize: 18),
                         ),
-                      ),
+                        Text(
+                          '${_trades.length}',
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 30),
+                        ),
+                      ],
                     ),
                   ),
-                  Row(
+                  Column(
                     children: [
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                              color: bgSecondaryDark,
-                              borderRadius: BorderRadius.circular(10)),
-                          child: Column(
-                            children: [
-                              const Text(
-                                'YUTISH',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              Text(
-                                ' $_won',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ],
-                          ),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                            color: clGreen.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(10)),
+                        child: Row(
+                          children: [
+                            Text(
+                              ' $_won',
+                              style: const TextStyle(color: clGreen),
+                            ),
+                            const Text(
+                              ' ta',
+                              style: TextStyle(color: clGreen),
+                            ),
+                          ],
                         ),
                       ),
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                              color: bgSecondaryDark,
-                              borderRadius: BorderRadius.circular(10)),
-                          child: Column(
-                            children: [
-                              const Text(
-                                'YUTQAZISH',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              Text(
-                                '$_loss',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ],
-                          ),
+                      const SizedBox(height: 5),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                            color: clRed.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(10)),
+                        child: Row(
+                          children: [
+                            Text(
+                              '$_loss',
+                              style: const TextStyle(color: clRed),
+                            ),
+                            const Text(
+                              ' ta',
+                              style: TextStyle(color: clRed),
+                            ),
+                          ],
                         ),
                       )
                     ],
@@ -345,7 +360,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                 width: double.infinity,
                                 child: ElevatedButton(
                                     onPressed: () => _addTrade(true),
-                                    child: const Text('Profit')),
+                                    style: ButtonStyle(
+                                      backgroundColor: WidgetStateProperty.all<
+                                              Color>(
+                                          clGreen), // Example background color
+                                      // Other customizations like foregroundColor, padding, etc. can be added here
+                                    ),
+                                    child: const Text('+ Profit')),
                               ),
                             )
                           ],
@@ -378,8 +399,14 @@ class _MyHomePageState extends State<MyHomePage> {
                               child: SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
+                                    style: ButtonStyle(
+                                      backgroundColor: WidgetStateProperty.all<
+                                              Color>(
+                                          clRed), // Example background color
+                                      // Other customizations like foregroundColor, padding, etc. can be added here
+                                    ),
                                     onPressed: () => _addTrade2(false),
-                                    child: const Text('Loss')),
+                                    child: const Text('- Loss')),
                               ),
                             )
                           ],
@@ -510,36 +537,77 @@ class _MyHomePageState extends State<MyHomePage> {
               height: 400,
               width: double.infinity,
               decoration: BoxDecoration(
-                  color: bgPrimaryDark,
-                  borderRadius: BorderRadius.circular(10)),
+                color: bgPrimaryDark,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: ListView.builder(
-                shrinkWrap: true,
-                reverse: true,
-                // physics: const NeverScrollableScrollPhysics(),
                 itemCount: _trades.length,
                 itemBuilder: (context, index) {
                   final trade = _trades[index];
                   final tradeNumber = index + 1;
                   final tradeType = trade.isProfit ? 'Profit' : 'Loss';
-                  return Card(
-                    color: bgSecondaryDark,
-                    child: ListTile(
-                      title: Text(
-                        'Trade $tradeNumber',
-                        style: const TextStyle(color: Colors.white),
+
+                  // Format date for current trade
+                  String formattedDate = _formatDate(trade.date);
+
+                  // Check if current date is different from previous date
+                  bool showDateHeader = index == 0 ||
+                      _trades[index - 1].date.day != trade.date.day;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (showDateHeader)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  formattedDate,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                               'Balans: ${_balance.toString()} \$',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      Card(
+                        color: bgSecondaryDark,
+                        child: ListTile(
+                          title: Text(
+                            'Trade $tradeNumber',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          subtitle: Text(
+                            '$tradeType: ${tradeType == "Profit" ? "+" : ""}${trade.amount.toStringAsFixed(2)} \$',
+                            style: TextStyle(
+                              color: trade.isProfit ? clGreen : clRed,
+                            ),
+                          ),
+                          trailing: Text(
+                            formattedDate,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
                       ),
-                      subtitle: Text(
-                          '$tradeType: ${trade.amount.toStringAsFixed(2)}',
-                          style: TextStyle(
-                              color: tradeType == "Profit" ? clGreen : clRed)),
-                      trailing: Text(
-                          'Win rate: ${trade.isProfit ? _profitPercentage.toStringAsFixed(1) : _lossPercentage.toStringAsFixed(1)}%',
-                          style: const TextStyle(color: Colors.white)),
-                    ),
+                    ],
                   );
                 },
               ),
             ),
+
             //settings widget reset & edit balance
             Container(
               margin: const EdgeInsets.only(top: 8, bottom: 8),
@@ -576,5 +644,40 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     );
+  }
+}
+
+String _formatDate(DateTime date) {
+  return '${date.day} ${_getMonthName(date.month)} ${date.year}';
+}
+
+String _getMonthName(int month) {
+  switch (month) {
+    case 1:
+      return 'January';
+    case 2:
+      return 'February';
+    case 3:
+      return 'March';
+    case 4:
+      return 'April';
+    case 5:
+      return 'May';
+    case 6:
+      return 'June';
+    case 7:
+      return 'July';
+    case 8:
+      return 'August';
+    case 9:
+      return 'September';
+    case 10:
+      return 'October';
+    case 11:
+      return 'November';
+    case 12:
+      return 'December';
+    default:
+      return '';
   }
 }
