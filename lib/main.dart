@@ -57,7 +57,6 @@ class _MyHomePageState extends State<MyHomePage> {
   double _lossPercentage = 0.0; // Loss foiz
   double _highestProfit = 0.0; // Eng yuqori profit miqdori
   double _highestLoss = 0.0; // Eng yuqori loss miqdori
-  final TextEditingController _balanceController = TextEditingController();
 
   @override
   void initState() {
@@ -200,25 +199,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> _updateBalance() async {
-    final newBalance = double.tryParse(_balanceController.text);
-
-    if (newBalance != null) {
-      final path = await _localFile;
-
-      // Perform async operations first
-      if (await path.exists()) {
-        await _resetTrades();
-      }
-
-      // Update state within setState after async operations are done
-      setState(() {
-        _balance = newBalance;
-        _balanceController.clear();
-      });
-    }
-  }
-
   Future<void> _resetTrades() async {
     final path = await _localFile;
     await path.delete();
@@ -255,8 +235,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   borderRadius: BorderRadius.circular(10)),
               child: Center(
                 child: Text(
-                  'Win rate: ${_winRate.toStringAsFixed(1)}%',
-                  style: const TextStyle(color: Colors.white),
+                  'Yutish koeffitsiendi: ${_winRate.toStringAsFixed(1)}%',
+                  style: const TextStyle(color: Colors.white,fontSize: 23),
                 ),
               ),
             ),
@@ -277,7 +257,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          'Total No. of trades: ${_trades.length}',
+                          'Barcha tradelar soni: ${_trades.length}',
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
@@ -294,7 +274,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: Column(
                             children: [
                               const Text(
-                                'WON',
+                                'YUTISH',
                                 style: TextStyle(color: Colors.white),
                               ),
                               Text(
@@ -314,7 +294,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           child: Column(
                             children: [
                               const Text(
-                                'LOST',
+                                'YUTQAZISH',
                                 style: TextStyle(color: Colors.white),
                               ),
                               Text(
@@ -348,15 +328,26 @@ class _MyHomePageState extends State<MyHomePage> {
                             borderRadius: BorderRadius.circular(10)),
                         child: Column(
                           children: [
-                            TextField(
-                              controller: _controller,
-                              decoration:
-                                  const InputDecoration(labelText: 'Amount'),
-                              keyboardType: TextInputType.number,
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: TextField(
+                                style: const TextStyle(color: Colors.white),
+                                controller: _controller,
+                                decoration: const InputDecoration(
+                                    labelText: 'Qiymati',
+                                    labelStyle: TextStyle(color: Colors.white)),
+                                keyboardType: TextInputType.number,
+                              ),
                             ),
-                            ElevatedButton(
-                                onPressed: () => _addTrade(true),
-                                child: const Text('Add Profit'))
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                    onPressed: () => _addTrade(true),
+                                    child: const Text('Profit')),
+                              ),
+                            )
                           ],
                         ),
                       ),
@@ -371,15 +362,26 @@ class _MyHomePageState extends State<MyHomePage> {
                             borderRadius: BorderRadius.circular(10)),
                         child: Column(
                           children: [
-                            TextField(
-                              controller: _controller2,
-                              decoration:
-                                  const InputDecoration(labelText: 'Amount'),
-                              keyboardType: TextInputType.number,
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: TextField(
+                                controller: _controller2,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: const InputDecoration(
+                                    labelText: 'Qiymati',
+                                    labelStyle: TextStyle(color: Colors.white)),
+                                keyboardType: TextInputType.number,
+                              ),
                             ),
-                            ElevatedButton(
-                                onPressed: () => _addTrade2(false),
-                                child: const Text('Add Loss'))
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                    onPressed: () => _addTrade2(false),
+                                    child: const Text('Loss')),
+                              ),
+                            )
                           ],
                         ),
                       ),
@@ -404,28 +406,28 @@ class _MyHomePageState extends State<MyHomePage> {
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              "Starting balance: $_balance",
+                              "Boshlang'ich balans: $_balance",
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              "Current balance: $_balance",
+                              "Hozirgi balans: $_balance",
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              "Current profit: $_lastProfit",
+                              "Oxirgi profit: $_lastProfit",
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              "Profit percentage: ${_profitPercentage.toStringAsFixed(1)}%",
+                              "Profit koeffitsienti: ${_profitPercentage.toStringAsFixed(1)}%",
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
@@ -447,28 +449,28 @@ class _MyHomePageState extends State<MyHomePage> {
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              "Max WON in a row: $_won",
+                              "G'alabalar soni: $_won",
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              "Max LOST in a row: $_loss",
+                              "Yutqazishlar soni: $_loss",
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              "Highest profit: $_highestProfit",
+                              "Eng katta profit: $_highestProfit",
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
-                              "Highest Loss: $_highestLoss ",
+                              "Eng katta Loss: $_highestLoss ",
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
@@ -488,11 +490,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SizedBox(
-                          width: snapshot.data!.length * 40.0,
-                          child: PnLBarChart(data: snapshot.data!)),
-                    );
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                            width: snapshot.data!.length * 45.0,
+                            child: PnLBarChart(data: snapshot.data!)));
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else {
@@ -552,7 +553,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => _resetTrades(),
-                      child: const Text('RESET'),
+                      child: const Text('YANGILASH'),
                     ),
                   ),
                   const SizedBox(width: 15),
@@ -561,7 +562,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: <Widget>[
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: _updateBalance,
+                            onPressed: () {},
                             child: const Text('Update Balance'),
                           ),
                         ),
